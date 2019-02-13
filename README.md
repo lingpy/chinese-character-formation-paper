@@ -28,4 +28,4 @@ Otherwise, you can also run the analyses in separation, here, simply type:
 $ make ANALYSIS
 ```
 
-where ANALYSIS is one of `sagart` 
+where ANALYSIS is one of `sagart`, `haudricourt`, `starostin`, `pan`, `gabelentz`, or `graph`. Data will then be written to the folder `output/`. 
