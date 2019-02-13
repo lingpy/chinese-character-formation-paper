@@ -1,0 +1,5 @@
+lingpy>=2.6.4
+sinopy>=0.3.3
+tabulate
+networkx
+
