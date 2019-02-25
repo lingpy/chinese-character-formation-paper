@@ -2,13 +2,14 @@ import re
 import lingpy
 from sinopy import sinopy
 import tqdm
+from collections import defaultdict
 
 def wikibooks():
 
     with open('wikibooks.txt') as f:
         data = f.readlines()
     out = []
-    gsr = {}
+    gsr = defaultdict(dict)
     for i, line in enumerate(data):
         line = line.strip().replace('\t', ' ')
         if line.startswith('*'):
@@ -54,7 +55,7 @@ def wikibooks():
                         out += [(
                             char, pinyin, 'Middle_Chinese', '', karlgren, reading,
                             'Wikibooks2016a')]
-                        gsr[char] = [pinyin, reading, karlgren]
+                        gsr[char][reading] = [pinyin, reading, karlgren]
 
     with open('karlgren.tsv', 'w') as f:
         f.write('ID\tCHARACTER\tPINYIN\tDOCULECT\tPHONETIC_CLASS\tKARLGREN_ID\tREADING\tSOURCE\n')
@@ -122,7 +123,7 @@ if __name__ == '__main__':
 
     gsr = wikibooks()
     ids = xiesheng()
-
+    count = []
     with open('data.tsv', 'w') as f:
         f.write('\t'.join(
             [
@@ -136,28 +137,29 @@ if __name__ == '__main__':
 
         missing = 0
 
-        for char, vals in sorted(
-                gsr.items(), 
-                key=lambda x: (x[1][2], x[1][1])):
-            xs = ids.get(char, '')
-            if len(xs) > 1:
-                missing += 1
-                xs = '??'
-            elif not xs:
-                missing += 1
-                xs = '?'
-            elif xs == '?':
-                missing += 1
-            
-            f.write('\t'.join([
-                char,
-                vals[2][:4],
-                vals[2][4:],
-                xs,
-                vals[0],
-                vals[1]])+'\n')
+        for char, readings in sorted(
+                gsr.items()):
+            count += [len(readings)]
+            for pinyin, reading, karlgren in readings.values():
+                xs = ids.get(char, '')
+                if len(xs) > 1:
+                    missing += 1
+                    xs = '??'
+                elif not xs:
+                    missing += 1
+                    xs = '?'
+                elif xs == '?':
+                    missing += 1
+                
+                f.write('\t'.join([
+                    char,
+                    karlgren[:4],
+                    karlgren[4:],
+                    xs,
+                    pinyin,
+                    reading])+'\n')
     print(missing)
-        
+    print('{0:.2f}'.format(sum(count) / len(count)))
 
 
 

@@ -16,16 +16,29 @@ def n_final(syllable):
     return False
 
 
+def has_t(syllable):
+    bx = parse_baxter(syllable)
+    if 't' in bx[2]:
+        return True
+    return False
+
+def no_t_ng(syllable):
+    bx = parse_baxter(syllable)
+    if not 'ng' in bx[2] and not 't' in bx[2]:
+        return True
+    return False
+
+
 def velars(syllable):
     bx = parse_baxter(syllable)
-    if bx[0] in ['k', 'g', 'kh', 'x', 'h']:
+    if bx[0] in ['k', 'g', 'kh', 'x', 'h', 'ng']:
         return True
     return False
 
 
 def glottals(syllable):
     bx = parse_baxter(syllable)
-    if bx[0] in ["'", "y", "'y"]:
+    if bx[0] in ["'", "y"]:
         return True
     return False
 

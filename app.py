@@ -6,13 +6,17 @@ from classify import *
 from tabulate import tabulate
 import sys
 import html
+from collections import defaultdict
+from tqdm import tqdm
 
 
 def load_data(path):
 
     data = csv2list(path, strip_lines=False)
-    return {line[0]: dict(zip([h.lower() for h in data[0]], line)) for line in
-            data[1:]}
+    out = defaultdict(list)
+    for line in data[1:]:
+        out[line[0]] +=  [dict(zip([h.lower() for h in data[0]], line))]
+    return out
 
 # make a network of all series
 def make_graph(data):
@@ -42,7 +46,7 @@ if __name__ == '__main__':
     data = load_data('data/data.tsv')
     
     if not [x for x in argv if x in ['sagart', 'graph', 'haudricourt', 'starostin',
-        'gabelentz', 'pulleyblank', 'pan']]:
+        'gabelentz', 'pulleyblank', 'pan', 'wang']]:
         exit()
 
     if 'graph' in argv:
@@ -69,6 +73,13 @@ if __name__ == '__main__':
         header = ['GROUP', 'MCH',  'p', 't', 'none', 'PURITY']
         condition = lambda x: '1' in x and '2' in x
 
+    if 'wang' in argv:
+        condition1 = n_final
+        condition2 = has_t
+        cname = 'wang'
+        header = ['GROUP', 'MCH', 'n', 't', 'none', 'PURITY']
+        condition = lambda x: '1' in x and '2' in x
+
     if 'pulleyblank' in argv:
         condition1 = qutone
         condition2 = lambda x: False if qutone(x) else True
@@ -76,14 +87,12 @@ if __name__ == '__main__':
         header = ['GROUP', 'MCH',  'qu', 'other', 'none', 'PURITY']
         condition = lambda x: '1' in x and '2' in x
 
-
     if 'starostin' in argv:
         condition1 = n_final
-        condition2 = lambda x: False if n_final(x) else True
+        condition2 = no_t_ng #lambda x: False if n_final(x) else True
         cname = 'starostin'
         header = ['GROUP', 'MCH',  'n-final', 'not-n-final', 'none', 'PURITY']
         condition = lambda x: '1' in x and '2' in x
-
 
     if 'pan' in argv:
         condition1 = velars
@@ -100,7 +109,7 @@ if __name__ == '__main__':
         cname = 'gabelentz'
         header = ['GROUP', 'MCH', 'velars', 'laterals', 'none', 'PURITY']
         condition = lambda x: '1' in x and '2' in x
-
+    
     D = defaultdict(lambda : defaultdict(list))
     text = '<html><head><meta charset="utf-8"/><style>td {border: 1pt solid black};</style> </head><body>'
 
@@ -108,14 +117,26 @@ if __name__ == '__main__':
     found = 1
 
     # get karlgren nodes
-    karlgren = sorted(set(v['karlgren'] for v in data.values()))
+    karlgren = set()
+    for k, vals in data.items():
+        for val in vals:
+            karlgren.add(val['karlgren'])
+    karlgren = sorted(karlgren)
+
+    all_data, all_mch = [], defaultdict(list)
+    for k, v in data.items():
+        all_data += v
+        for val in v:
+            all_mch[k] += [val['mch']]
 
     # iterate over all karlgren items
-    for group in karlgren:
+    for group in tqdm(karlgren, 'analyzing characters'):
         # assemble xiesheng series
         chars = [(x['character'], x['mch'], x['xiesheng']) for x in \
-                        data.values() if x['karlgren'] == group and x['xiesheng'].strip('?')
+                        all_data if x['karlgren'] == group and
+                        x['xiesheng'].strip('?') and x['mch'].strip()
                         ]
+            
         for char, mch, xiesheng in chars:
             D[group][xiesheng] += [(char, mch)]
 
@@ -131,14 +152,14 @@ if __name__ == '__main__':
 
             table = []
             for xiesheng in D[group].keys():
-                row = [xiesheng, data.get(char, {"mch": ''})['mch'], [], [], [], '']
+                row = [xiesheng, ', '.join(all_mch.get(char, [''])), [], [], [], '']
                 for char, mch in D[group][xiesheng]:
                     if condition1(mch):
-                        row[2] += [char+' '+mch]
+                        row[2] += [char+'<sup>'+str(hex(ord(char)))[2:]+'&nbsp;'+mch+'</sup>']
                     elif condition2(mch):
-                        row[3] += [char+' '+mch]
+                        row[3] += [char+'<sup>'+str(hex(ord(char)))[2:]+'&nbsp;'+mch+'</sup>']
                     else:
-                        row[4] += [char+' '+mch]
+                        row[4] += [char+'<sup>'+str(hex(ord(char)))[2:]+'&nbsp;'+mch+'</sup>']
 
                 if row[2] and not row[3]:
                     row[5] = 'pure:'+header[2]
@@ -160,7 +181,7 @@ if __name__ == '__main__':
                     print('')
                 if len(D[group]) > 1:
                     text += '<p>'+'('+str(found)+') '
-                    text += group+' [{0}]'.format(len(D[group]))+'</br>'
+                    text += group+' [{0}]'.format(len(D[group]))+''
                     text += tabulate(table, headers=header,
                             tablefmt='html').replace(
                                     '<td>', 

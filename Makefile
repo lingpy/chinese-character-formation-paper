@@ -1,3 +1,8 @@
+wang:
+	@python app.py wang
+	pandoc -i output/wang.html -o output/wang.pdf --latex-engine=xelatex --template=data/default.latex
+	pandoc -i output/wang.html -o output/wang.tex --latex-engine=xelatex --template=data/default.latex
+
 
 sagart:
 	@python app.py sagart
@@ -29,5 +34,5 @@ starostin:
 	pandoc -i output/starostin.html -o output/starostin.pdf --latex-engine=xelatex --template=data/default.latex
 	pandoc -i output/starostin.html -o output/starostin.tex --latex-engine=xelatex --template=data/default.latex
 
-all: sagart pan gabelentz haudricourt pulleyblank starostin
+all: sagart pan gabelentz haudricourt pulleyblank starostin wang
 
