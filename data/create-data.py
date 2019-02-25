@@ -3,6 +3,7 @@ import lingpy
 from sinopy import sinopy
 import tqdm
 from collections import defaultdict
+from clldutils.text import strip_brackets
 
 def wikibooks():
 
@@ -11,7 +12,8 @@ def wikibooks():
     out = []
     gsr = defaultdict(dict)
     for i, line in enumerate(data):
-        line = line.strip().replace('\t', ' ')
+        line = strip_brackets(line.strip().replace('\t', ' '), brackets={'(':
+            ')'})
         if line.startswith('*'):
             if not line[1] == ' ':
                 line = line.replace('*', '* ')
